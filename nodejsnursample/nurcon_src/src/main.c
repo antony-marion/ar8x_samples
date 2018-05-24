@@ -1,5 +1,5 @@
 /* 
-  Copyright © 2014- Nordic ID 
+  Copyright Â© 2014- Nordic ID 
   NORDIC ID DEMO SOFTWARE DISCLAIMER
 
   You are about to use Nordic ID Demo Software ("Software"). 
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 	int nItems;
 	int alive = 1;
 	int error;
-	int action = 0, bank = 0, wordAddress = 0, readByteCount = 0;
+	int action = 0, bank = 0, wordAddress = 0, readByteCount = 0, writeByteCount=0;
 	HANDLE hApi = NULL;
 	TCHAR connStr[100] = { 0 };
 	
@@ -163,7 +163,8 @@ int main(int argc, char *argv[])
 
 	error = NUR_SUCCESS;
 	/* Try to connect to localhost */
-	error = NurApiConnectSocket(hApi, _T("127.0.0.1"), 4333);
+	//error = NurApiConnectSocket(hApi, _T("127.0.0.1"), 4333);
+	error = NurApiSetUsbAutoConnect(hApi, TRUE); 
 	if (error != NUR_SUCCESS) {
 		/* 
 			In Linux you probably need to 'sudo' (in case you are sure that the port is present and device is connected to it). 
@@ -175,7 +176,7 @@ int main(int argc, char *argv[])
 	}
 	action = atoi(argv[1]);
 		
-	if(action == 2) {
+	if(action == 2 ) {
 		if(argc < 6) {
 			_tprintf(_T("Tag read: parameters missing, only %d available\n"), argc);
 			return 0;
@@ -184,10 +185,27 @@ int main(int argc, char *argv[])
 		{
 			bank = atoi(argv[3]);
 			wordAddress = atoi(argv[4]);
-			readByteCount = atoi(argv[5]);		
+			readByteCount = _wtoi(argv[5]);
+      
 		}
 	}
-	
+
+
+
+  if (action == 3) {
+    if (argc < 6) {
+      _tprintf(_T("Tag write: parameters missing, only %d available\n"), argc);
+      return 0;
+    }
+    else
+    {
+      bank = atoi(argv[3]);
+      wordAddress = atoi(argv[4]);
+
+    }
+  }
+
+
 	error = NUR_NO_ERROR;	
 	//_tprintf(_T("Action %d\r\n"), action);	
 	switch(action)
@@ -200,7 +218,10 @@ int main(int argc, char *argv[])
 		break;
 		case 2: 
 			error = read_tag(hApi, argv[2], bank, wordAddress, readByteCount);
-			break;
+			break;  
+    case 3:
+      error = write_tag(hApi, argv[2], bank, wordAddress, argv[5]);
+      break;
 		default:
 			_tprintf(_T("Invalid operation\n"));
 		break;

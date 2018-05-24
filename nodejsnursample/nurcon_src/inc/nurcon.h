@@ -97,6 +97,8 @@ extern int simple_inventory(HANDLE hApi, int *alive);
 
 extern int read_tag(HANDLE hApi, TCHAR *epc, int bank, int wordAddress, int readByteCount);
 
+extern int write_tag(HANDLE hApi, TCHAR *epc, int bank, int wordAddress, TCHAR *data);
+
 extern void dump_tags(HANDLE hApi, int *alive);
 extern void save_tags(HANDLE hApi, int *alive);
 

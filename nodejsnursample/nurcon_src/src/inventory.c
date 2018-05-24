@@ -1,5 +1,5 @@
 /* 
-  Copyright © 2014- Nordic ID 
+  Copyright Â© 2014- Nordic ID 
   NORDIC ID DEMO SOFTWARE DISCLAIMER
 
   You are about to use Nordic ID Demo Software ("Software"). 
@@ -27,12 +27,22 @@
 /// <param name="epcStr">The epc string.</param>
 void EpcToString(const BYTE *epc, DWORD epcLen, TCHAR *epcStr)
 {
-	DWORD n;
-	int pos = 0;
-	for (n=0; n<epcLen; n++) {
-		pos += _stprintf_s(&epcStr[pos], NUR_MAX_EPC_LENGTH-pos, _T("%02x"), epc[n]);
-	}
-	epcStr[pos] = 0;
+  DWORD n;
+  int pos = 0;
+  for (n = 0; n<epcLen; n++) {
+    pos += _stprintf_s(&epcStr[pos], NUR_MAX_EPC_LENGTH - pos, _T("%02x"), epc[n]);
+  }
+  epcStr[pos] = 0;
+}
+
+void HexToString(const BYTE *epc, DWORD epcLen, TCHAR *epcStr, DWORD epcStrLen)
+{
+  DWORD n;
+  int pos = 0;
+  for (n = 0; n<epcLen; n++) {
+    pos += _stprintf_s(&epcStr[pos], epcStrLen-pos , _T("%02x"), epc[n]);
+  }
+  epcStr[pos] = 0;
 }
 
 unsigned char GetBinVal(char ch)
@@ -52,7 +62,7 @@ void HexStringToBin(TCHAR* str,BYTE* buf,int length)
 {
 	int strPtr = 0;
 	int x = 0;
-	if(length>62) length=62;
+	if(length>256) length=256;
 	for(x=0;x<length;x++)
 	{
 		strPtr=x*2;
@@ -62,23 +72,56 @@ void HexStringToBin(TCHAR* str,BYTE* buf,int length)
 	}    
 }
 
+
+/*
+// Example: Write user memory to tag, singluted by EPC memory
+int WriteTagUserMemory(HANDLE hApi, BYTE *epc, int epcLength, BYTE *userMem, int userMemLen)
+{
+return NurApiWriteSingulatedTag32(hApi, 0, FALSE, NUR_BANK_EPC, 0x20, epcLength*8, epc, NUR_BANK_USER, 0, userMemLen, userMem);
+}
+*/
+
+int write_tag(HANDLE hApi, TCHAR *epc, int bank, int wordAddress, TCHAR *data) {
+  BYTE epcBuffer[1000];
+  BYTE dataBuffer[1000];
+  int error;
+
+  DWORD epcLen = _tcslen(epc) / 2;
+  DWORD dataLen = _tcslen(data) / 2;
+
+  HexStringToBin(epc, epcBuffer, epcLen);
+  HexStringToBin(data, dataBuffer, dataLen);
+
+  error = NurApiWriteSingulatedTag32(hApi, 0, FALSE, NUR_BANK_EPC, 0x20, epcLen * 8, epcBuffer, NUR_BANK_USER, wordAddress, dataLen, dataBuffer);
+
+  return error;
+}
+
 int read_tag(HANDLE hApi, TCHAR *epc, int bank, int wordAddress, int readByteCount)
 {
 	int error;
-	BYTE buffer[128];
-	BYTE ret[128];
-	TCHAR readStr[128];
+
+  // 1000 is a maximum value ( > 256 bytes = 2kbits)
+	BYTE buffer[1000];
+	BYTE ret[1000];
+	TCHAR readStr[1000];
 	DWORD epcLen=_tcslen(epc)/2;
 	if(epcLen > 0)
 	{	
 		HexStringToBin(epc, buffer, epcLen);
 		error = NurApiReadTagByEPC(hApi, 0, FALSE, buffer, epcLen, bank, wordAddress, readByteCount, ret);
+
+
 		if (error != NUR_NO_ERROR)
 		{
 			return error;
 		}
 	
-		EpcToString(ret, readByteCount, readStr);
+		/*
+    EpcToString(ret, readByteCount, readStr);
+    */
+   
+    HexToString(ret, readByteCount, readStr, 1000);
 		_tprintf(_T("%s"), readStr);		
 	}
 	else
